@@ -1,0 +1,32 @@
+# Dynamic configuration
+
+http:
+  routers:
+    my-router:
+      rule: Path(`/whoami`)
+      service: service-whoami
+      entryPoints:
+        - http
+      middlewares:
+        - checkheaders
+
+  services:
+   service-whoami:
+      loadBalancer:
+        servers:
+          - url: http://127.0.0.1:5000
+  
+  middlewares:
+    checkheaders:
+      plugin:
+        dev:
+          headers:
+            - header:
+              name: "HEADER_1"
+              value: "VALUE_1"
+            - name: "HEADER_2"
+              value: "VALUE_2"
+            - header:
+              name: "HEADER_3"
+              value: "VALUE_3"
+              required: false
