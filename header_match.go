@@ -13,6 +13,7 @@ type SingleHeader struct {
 	Name     string `json:"name,omitempty"`
 	Value    string `json:"value,omitempty"`
 	Required *bool  `json:"required,omitempty"`
+	Contains *bool  `json:"contains,omitempty"`
 }
 
 // Config the plugin configuration.
@@ -60,6 +61,17 @@ func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for _, vHeader := range a.headers {
 		reqHeaderVal := req.Header.Get(vHeader.Name)
 
+		if vHeader.IsContains() {
+			if !strings.Contains(reqHeaderVal, vHeader.Value) {
+				http.Error(rw, "Not allowed", http.StatusForbidden)
+				return
+			}
+
+			if strings.Contains(reqHeaderVal, vHeader.Value) {
+				continue
+			}
+		}
+
 		if vHeader.IsRequired() && reqHeaderVal != vHeader.Value {
 			http.Error(rw, "Not allowed", http.StatusForbidden)
 			return
@@ -72,6 +84,15 @@ func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	a.next.ServeHTTP(rw, req)
+}
+
+//IsContains checks whether a header value should contain the configured value
+func (s *SingleHeader) IsContains() bool {
+	if s.Contains == nil {
+		return false
+	}
+
+	return true
 }
 
 //IsRequired checks whether a header is mandatory in the request, defaults to 'true'

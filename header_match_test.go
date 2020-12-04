@@ -11,12 +11,14 @@ import (
 
 var required = true
 var not_required = false
+var contains = true
 
 func TestHeadersMatch(t *testing.T) {
 	requestHeaders := map[string]string{
 		"test1": "testvalue1",
 		"test2": "testvalue2",
 		"test3": "testvalue3",
+		"test4": "value4",
 	}
 
 	executeTest(t, requestHeaders, http.StatusOK)
@@ -26,6 +28,7 @@ func TestHeadersNotMatch(t *testing.T) {
 		"test1": "wrongvalue1",
 		"test2": "wrongvalue2",
 		"test3": "wrongvalue3",
+		"test4": "correctvalue4",
 	}
 
 	executeTest(t, requestHeaders, http.StatusForbidden)
@@ -35,6 +38,7 @@ func TestHeadersNotRequired(t *testing.T) {
 	requestHeaders := map[string]string{
 		"test1": "testvalue1",
 		"test2": "testvalue2",
+		"test4": "ue4",
 	}
 
 	executeTest(t, requestHeaders, http.StatusOK)
@@ -56,6 +60,12 @@ func executeTest(t *testing.T, requestHeaders map[string]string, expectedResultC
 			Name:     "test3",
 			Value:    "testvalue3",
 			Required: &not_required,
+		},
+		{
+			Name:     "test4",
+			Value:    "ue4",
+			Required: &required,
+			Contains: &contains,
 		},
 	}
 
