@@ -30,3 +30,8 @@ http:
               name: "HEADER_3"
               value: "VALUE_3"
               required: false
+            - header:
+              name: "HEADER_4"
+              value: "LUE_4"
+              contains: true
+              required: true
