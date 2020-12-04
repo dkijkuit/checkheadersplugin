@@ -3,7 +3,7 @@ type: middleware
 
 import: github.com/dkijkuit/checkheadersplugin
 
-summary: '[Demo] Check request headers'
+summary: 'Checks the incoming request for specific headers and their values to be present and matching the configuration.'
 
 testData:
   headers:
