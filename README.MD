@@ -54,9 +54,10 @@ Supported configurations per header
 | values | []string | A list of allowed values which are matched against the request header value|
 | contains | boolean | If set to true (default false), the request is allowed if the rtequest header value contains the value specified in the configuration |
 | required | boolean | If set to false (default true), the request is allowed if the header is absent or the value is empty|
+| urldecode | boolean | If set to true (default false), the value of the request header will be URL decoded before further processing with the plugin. This is useful when using this plugin with the [PassTLSClientCert](https://doc.traefik.io/traefik/middlewares/passtlsclientcert/) middleware that Traefik offers.
 
 #
-## Example config
+## Example 1 config
 ```yaml
 middlewares:
   my-checkheadersplugin:
@@ -89,3 +90,30 @@ middlewares:
             contains: true
             required: true
 ```
+
+## Example 2 config
+You can also use this plugin to check on client certificate fields when using mTLS configuration. The [PassTLSClientCert](https://doc.traefik.io/traefik/middlewares/passtlsclientcert/) Traefik middleware adds the client certificate information to the request header `X-Forwarded-Tls-Client-Cert-Info` in a URL encoded format. Using this plugin as second middleware for route, you can verify the client certificate fields.
+
+Example client certificate request header:
+```http
+X-Forwarded-Tls-Client-Cert-Info: Subject="C=US,ST=Ohio,L=Akron,O=Google,CN=server0.google.com";Issuer="DC=us,DC=google.com,DC=com,CN=GoogleRootCA";NB="1687386830";NA="1750458830";SAN="server0.google.com"
+```
+
+You could configure the plugin to check for the `CN` and the `DC` fields:
+```yaml
+middlewares:
+  my-checkheadersplugin:
+    plugin:
+      checkheadersplugin:
+        headers:
+          - header:
+            name: "X-Forwarded-Tls-Client-Cert-Info"
+            matchtype: all
+            values: 
+              - "CN=server0.google.com"
+              - "DC=google.com"
+            contains: true
+            required: true
+```
+
+
