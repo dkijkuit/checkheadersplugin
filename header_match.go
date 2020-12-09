@@ -5,15 +5,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
 //SingleHeader contains a single header keypair
 type SingleHeader struct {
-	Name     string `json:"name,omitempty"`
-	Value    string `json:"value,omitempty"`
-	Required *bool  `json:"required,omitempty"`
-	Contains *bool  `json:"contains,omitempty"`
+	Name      string   `json:"name,omitempty"`
+	Values    []string `json:"values,omitempty"`
+	MatchType string   `json:"matchtype,omitempty"`
+	Required  *bool    `json:"required,omitempty"`
+	Contains  *bool    `json:"contains,omitempty"`
+	URLDecode *bool    `json:"urldecode,omitempty"`
 }
 
 // Config the plugin configuration.
@@ -27,6 +30,14 @@ type HeaderMatch struct {
 	headers []SingleHeader
 	name    string
 }
+
+// MatchType defines an enum which can be used to specify the match type for the 'contains' config.
+type MatchType string
+
+const (
+	MatchAll MatchType = "all"
+	MatchOne MatchType = "one"
+)
 
 // CreateConfig creates the default plugin configuration.
 func CreateConfig() *Config {
@@ -45,8 +56,20 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		if strings.TrimSpace(vHeader.Name) == "" {
 			return nil, fmt.Errorf("configuration incorrect, missing header name")
 		}
-		if strings.TrimSpace(vHeader.Value) == "" {
-			return nil, fmt.Errorf("configuration incorrect, missing header value")
+		if len(vHeader.Values) == 0 {
+			return nil, fmt.Errorf("configuration incorrect, missing header values")
+		} else {
+			for _, value := range vHeader.Values {
+				if strings.TrimSpace(value) == "" {
+					return nil, fmt.Errorf("configuration incorrect, empty value found")
+				}
+			}
+		}
+		if !vHeader.IsContains() && vHeader.MatchType == string(MatchAll) {
+			return nil, fmt.Errorf("configuration incorrect for header %v %s", vHeader.Name, ", matchall can only be used in combination with 'contains'")
+		}
+		if strings.TrimSpace(vHeader.MatchType) == "" {
+			return nil, fmt.Errorf("configuration incorrect, missing match type configuration for header %v", vHeader.Name)
 		}
 	}
 
@@ -58,37 +81,69 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 }
 
 func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	headersValid := true
+
 	for _, vHeader := range a.headers {
 		reqHeaderVal := req.Header.Get(vHeader.Name)
 
-		if vHeader.IsContains() {
-			if !strings.Contains(reqHeaderVal, vHeader.Value) {
-				http.Error(rw, "Not allowed", http.StatusForbidden)
-				return
-			}
-
-			if strings.Contains(reqHeaderVal, vHeader.Value) {
-				continue
-			}
+		if vHeader.IsURLDecode() {
+			reqHeaderVal, _ = url.QueryUnescape(reqHeaderVal)
 		}
 
-		if vHeader.IsRequired() && reqHeaderVal != vHeader.Value {
-			http.Error(rw, "Not allowed", http.StatusForbidden)
-			return
-		}
+		if vHeader.IsContains() && reqHeaderVal != "" {
+			matchCount := 0
+			for _, value := range vHeader.Values {
+				if strings.Contains(reqHeaderVal, value) {
+					matchCount++
+				}
+			}
 
-		if !vHeader.IsRequired() && reqHeaderVal != "" && reqHeaderVal != vHeader.Value {
-			http.Error(rw, "Not allowed", http.StatusForbidden)
-			return
+			if vHeader.MatchType == string(MatchOne) && matchCount == 0 {
+				headersValid = false
+				break
+			}
+			if vHeader.MatchType == string(MatchAll) && matchCount != len(vHeader.Values) {
+				headersValid = false
+				break
+			}
+		} else {
+			matchCount := 0
+			for _, value := range vHeader.Values {
+				if reqHeaderVal == value {
+					matchCount++
+				}
+
+				if !vHeader.IsRequired() && reqHeaderVal == "" {
+					matchCount++
+				}
+			}
+
+			if matchCount == 0 {
+				headersValid = false
+				break
+			}
 		}
 	}
 
-	a.next.ServeHTTP(rw, req)
+	if headersValid {
+		a.next.ServeHTTP(rw, req)
+	} else {
+		http.Error(rw, "Not allowed", http.StatusForbidden)
+	}
+}
+
+//IsURLDecode checks whether a header value should be url decoded first before testing it
+func (s *SingleHeader) IsURLDecode() bool {
+	if s.URLDecode == nil || *s.URLDecode == false {
+		return false
+	}
+
+	return true
 }
 
 //IsContains checks whether a header value should contain the configured value
 func (s *SingleHeader) IsContains() bool {
-	if s.Contains == nil {
+	if s.Contains == nil || *s.Contains == false {
 		return false
 	}
 
