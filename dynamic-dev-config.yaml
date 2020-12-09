@@ -23,15 +23,26 @@ http:
           headers:
             - header:
               name: "HEADER_1"
-              values: "VALUE_1"
-            - name: "HEADER_2"
-              values: "VALUE_2"
+              matchtype: one
+              values: 
+                - "VALUE_1"
+                - "VALUE_99"
+            - header:
+              name: "HEADER_2"
+              matchtype: one
+              values: 
+                - "VALUE_2"
             - header:
               name: "HEADER_3"
-              values: "VALUE_3"
+              matchtype: one
+              values: 
+                - "VALUE_3"
               required: false
             - header:
               name: "HEADER_4"
-              values: "LUE_4"
+              matchtype: all
+              values: 
+                - "LUE_4"
+                - "VALUE_5"
               contains: true
               required: true
