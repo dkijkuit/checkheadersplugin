@@ -30,6 +30,57 @@ providers:
 
 ```
 
+```yaml
+# Dynamic configuration
+
+http:
+  routers:
+    my-router:
+      rule: Path(`/whoami`)
+      service: service-whoami
+      entryPoints:
+        - http
+      middlewares:
+        - checkheaders
+
+  services:
+   service-whoami:
+      loadBalancer:
+        servers:
+          - url: http://127.0.0.1:5000
+  
+  middlewares:
+    checkheaders:
+      plugin:
+        dev:
+          headers:
+            - header:
+              name: "HEADER_1"
+              matchtype: one
+              values: 
+                - "VALUE_1"
+                - "VALUE_99"
+            - header:
+              name: "HEADER_2"
+              matchtype: one
+              values: 
+                - "VALUE_2"
+            - header:
+              name: "HEADER_3"
+              matchtype: one
+              values: 
+                - "VALUE_3"
+              required: false
+            - header:
+              name: "HEADER_4"
+              matchtype: all
+              values: 
+                - "LUE_4"
+                - "VALUE_5"
+              contains: true
+              required: true
+```
+
 ## Launch Traefik using dev config (config of plugin can be found in dynamic-dev-config.yaml)
 ```bash
 $ docker run --rm -d -p 5000:80 containous/whoami
