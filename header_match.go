@@ -35,7 +35,9 @@ type HeaderMatch struct {
 type MatchType string
 
 const (
+	//MatchAll requires all values to be matched
 	MatchAll MatchType = "all"
+	//MatchOne requires only one value to be matched
 	MatchOne MatchType = "one"
 )
 
@@ -84,6 +86,7 @@ func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	headersValid := true
 
 	for _, vHeader := range a.headers {
+
 		reqHeaderVal := req.Header.Get(vHeader.Name)
 
 		if vHeader.IsURLDecode() {
@@ -91,37 +94,13 @@ func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		if vHeader.IsContains() && reqHeaderVal != "" {
-			matchCount := 0
-			for _, value := range vHeader.Values {
-				if strings.Contains(reqHeaderVal, value) {
-					matchCount++
-				}
-			}
-
-			if vHeader.MatchType == string(MatchOne) && matchCount == 0 {
-				headersValid = false
-				break
-			}
-			if vHeader.MatchType == string(MatchAll) && matchCount != len(vHeader.Values) {
-				headersValid = false
-				break
-			}
+			headersValid = checkContains(&reqHeaderVal, &vHeader)
 		} else {
-			matchCount := 0
-			for _, value := range vHeader.Values {
-				if reqHeaderVal == value {
-					matchCount++
-				}
+			headersValid = checkRequired(&reqHeaderVal, &vHeader)
+		}
 
-				if !vHeader.IsRequired() && reqHeaderVal == "" {
-					matchCount++
-				}
-			}
-
-			if matchCount == 0 {
-				headersValid = false
-				break
-			}
+		if !headersValid {
+			break
 		}
 	}
 
@@ -130,6 +109,42 @@ func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	} else {
 		http.Error(rw, "Not allowed", http.StatusForbidden)
 	}
+}
+
+func checkContains(requestValue *string, vHeader *SingleHeader) bool {
+	matchCount := 0
+	for _, value := range vHeader.Values {
+		if strings.Contains(*requestValue, value) {
+			matchCount++
+		}
+	}
+
+	if matchCount == 0 {
+		return false
+	} else if vHeader.MatchType == string(MatchAll) && matchCount != len(vHeader.Values) {
+		return false
+	}
+
+	return true
+}
+
+func checkRequired(requestValue *string, vHeader *SingleHeader) bool {
+	matchCount := 0
+	for _, value := range vHeader.Values {
+		if *requestValue == value {
+			matchCount++
+		}
+
+		if !vHeader.IsRequired() && *requestValue == "" {
+			matchCount++
+		}
+	}
+
+	if matchCount == 0 {
+		return false
+	}
+
+	return true
 }
 
 //IsURLDecode checks whether a header value should be url decoded first before testing it
