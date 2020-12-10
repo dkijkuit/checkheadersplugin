@@ -118,6 +118,17 @@ func executeTest(t *testing.T, requestHeaders map[string]string, expectedResultC
 			Contains:  &contains,
 			URLDecode: &urlDecode,
 		},
+		{
+			Name: "testContainsNotRequired",
+			Values: []string{
+				"value_not_important",
+				"value_not_important_2",
+			},
+			MatchType: string(checkheaders.MatchOne),
+			Required:  &not_required,
+			Contains:  &contains,
+			URLDecode: &urlDecode,
+		},
 	}
 
 	ctx := context.Background()
@@ -142,6 +153,6 @@ func executeTest(t *testing.T, requestHeaders map[string]string, expectedResultC
 	handler.ServeHTTP(recorder, req)
 
 	if recorder.Result().StatusCode != expectedResultCode {
-		t.Errorf("Unexpected response status code: %d, expected: %d", recorder.Result().StatusCode, expectedResultCode)
+		t.Errorf("Unexpected response status code: %d, expected: %d for incoming request headers: %s", recorder.Result().StatusCode, expectedResultCode, requestHeaders)
 	}
 }
