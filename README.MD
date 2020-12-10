@@ -165,6 +165,7 @@ middlewares:
               - "DC=google.com"
             contains: true
             required: true
+            urldecode: true
 ```
 
 
