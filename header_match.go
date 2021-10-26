@@ -17,6 +17,7 @@ type SingleHeader struct {
 	Required  *bool    `json:"required,omitempty"`
 	Contains  *bool    `json:"contains,omitempty"`
 	URLDecode *bool    `json:"urldecode,omitempty"`
+	Debug     *bool    `json:"debug,omitempty"`
 }
 
 // Config the plugin configuration.
@@ -99,6 +100,10 @@ func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			headersValid = checkRequired(&reqHeaderVal, &vHeader)
 		}
 
+		if vHeader.IsDebug() {
+			fmt.Println("checkheaders (debug):\n\tHeaders valid:", headersValid, "\n\tRequest headers:", reqHeaderVal, "\n\tConfigured headers:", vHeader.Values)
+		}
+
 		if !headersValid {
 			break
 		}
@@ -150,6 +155,15 @@ func checkRequired(requestValue *string, vHeader *SingleHeader) bool {
 //IsURLDecode checks whether a header value should be url decoded first before testing it
 func (s *SingleHeader) IsURLDecode() bool {
 	if s.URLDecode == nil || *s.URLDecode == false {
+		return false
+	}
+
+	return true
+}
+
+//IsDebug checks whether a header value should print debug information in the log
+func (s *SingleHeader) IsDebug() bool {
+	if s.Debug == nil || *s.Debug == false {
 		return false
 	}
 

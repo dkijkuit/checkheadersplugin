@@ -106,6 +106,7 @@ Supported configurations per header
 | contains  | boolean  | If set to true (default false), the request is allowed if the rtequest header value contains the value specified in the configuration |
 | required  | boolean  | If set to false (default true), the request is allowed if the header is absent or the value is empty|
 | urldecode | boolean  | If set to true (default false), the value of the request header will be URL decoded before further processing with the plugin. This is useful when using this plugin with the [PassTLSClientCert](https://doc.traefik.io/traefik/middlewares/passtlsclientcert/) middleware that Traefik offers.
+| debug     | boolean  | If set to true (default false), the request headers, values and validation will be printed to the console|
 
 #
 ## Example 1 config
