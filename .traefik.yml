@@ -32,3 +32,10 @@ testData:
         - "VALUE_5"
       contains: true
       required: true
+    - header:
+      name: "HEADER_4"
+      matchtype: one
+      values: 
+        - "VALUE_\\d"
+      regex: true
+      required: true

@@ -79,10 +79,10 @@ http:
               contains: true
               required: true
             - header:
-              name: "HEADER_5"
+              name: "HEADER_4"
               matchtype: one
               values:
-                - "^VALUE_5$"
+                - "VALUE_\\d"
               required: true
               regex: true
 ```
@@ -96,7 +96,7 @@ $ docker run --rm -d -p 5000:80 containous/whoami
 ## Test using cURL
 
 ```bash
-curl --location --insecure --request GET "http://localhost:4000/whoami" --header "HEADER_1: VALUE_99" --header "HEADER_2: VALUE_2" --header "HEADER_3: VALUE_3" --header "HEADER_4: VALUE_X_and_VALUE_4_and_VALUE_5_AND_6" --header "HEADER_5: VALUE_5"
+curl --location --insecure --request GET "http://localhost:4000/whoami" --header "HEADER_1: VALUE_99" --header "HEADER_2: VALUE_2" --header "HEADER_3: VALUE_3" --header "HEADER_4: VALUE_X_and_VALUE_4_and_VALUE_5_AND_6"
 ```
 
 Should return a 200 showing details about the request.
@@ -154,12 +154,12 @@ middlewares:
             contains: true
             required: true
           - header:
-              name: "HEADER_5"
+              name: "HEADER_4"
               matchtype: one
               values:
-                - "^VALUE_5$"
-              required: true
+                - "VALUE_\\d"
               regex: true
+              required: true
 ```
 
 ## Example 2 config

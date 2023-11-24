@@ -1,3 +1,3 @@
 module github.com/dkijkuit/checkheadersplugin
 
-go 1.15
+go 1.19

@@ -41,7 +41,7 @@ func TestHeadersOneMatch(t *testing.T) {
 		"test3":                            "testvalue3",
 		"test4":                            "value4",
 		"testNumberRegex":                  "12345",
-		"testCountryCodeRegex":             "EN",
+		"testCountryCodeRegex":             "GB",
 		"X-Forwarded-Tls-Client-Cert-Info": testcert,
 		"testMultipleContainsValues":       "test_or_value2",
 	}
@@ -151,7 +151,7 @@ func executeTest(t *testing.T, requestHeaders map[string]string, expectedResultC
 		{
 			Name:      "testCountryCodeRegex",
 			MatchType: string(checkheaders.MatchOne),
-			Values:    []string{"^NL|EN|FR$"},
+			Values:    []string{"^NL|GB|FR$"},
 			Regex:     &regex,
 			Required:  &required,
 		},
