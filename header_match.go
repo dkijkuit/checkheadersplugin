@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
-//SingleHeader contains a single header keypair
+// SingleHeader contains a single header keypair
 type SingleHeader struct {
 	Name      string   `json:"name,omitempty"`
 	Values    []string `json:"values,omitempty"`
@@ -18,6 +19,7 @@ type SingleHeader struct {
 	Contains  *bool    `json:"contains,omitempty"`
 	URLDecode *bool    `json:"urldecode,omitempty"`
 	Debug     *bool    `json:"debug,omitempty"`
+	Regex     *bool    `json:"regex,omitempty"` // New field for regex support
 }
 
 // Config the plugin configuration.
@@ -94,8 +96,12 @@ func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			reqHeaderVal, _ = url.QueryUnescape(reqHeaderVal)
 		}
 
-		if vHeader.IsContains() && reqHeaderVal != "" {
-			headersValid = checkContains(&reqHeaderVal, &vHeader)
+		if reqHeaderVal != "" {
+			if vHeader.IsContains() {
+				headersValid = checkContains(&reqHeaderVal, &vHeader)
+			} else if vHeader.IsRegex() {
+				headersValid = checkRegex(&reqHeaderVal, &vHeader)
+			}
 		} else {
 			headersValid = checkRequired(&reqHeaderVal, &vHeader)
 		}
@@ -133,6 +139,30 @@ func checkContains(requestValue *string, vHeader *SingleHeader) bool {
 	return true
 }
 
+func checkRegex(requestValue *string, vHeader *SingleHeader) bool {
+	matchCount := 0
+	for _, value := range vHeader.Values {
+		match, err := regexp.MatchString(value, *requestValue)
+		if err != nil {
+			if vHeader.IsDebug() {
+				fmt.Println("Error matching regex:", err)
+			}
+			return false
+		}
+		if match {
+			matchCount++
+		}
+	}
+
+	if matchCount == 0 {
+		return false
+	} else if vHeader.MatchType == string(MatchAll) && matchCount != len(vHeader.Values) {
+		return false
+	}
+
+	return true
+}
+
 func checkRequired(requestValue *string, vHeader *SingleHeader) bool {
 	matchCount := 0
 	for _, value := range vHeader.Values {
@@ -152,7 +182,7 @@ func checkRequired(requestValue *string, vHeader *SingleHeader) bool {
 	return true
 }
 
-//IsURLDecode checks whether a header value should be url decoded first before testing it
+// IsURLDecode checks whether a header value should be url decoded first before testing it
 func (s *SingleHeader) IsURLDecode() bool {
 	if s.URLDecode == nil || *s.URLDecode == false {
 		return false
@@ -161,7 +191,7 @@ func (s *SingleHeader) IsURLDecode() bool {
 	return true
 }
 
-//IsDebug checks whether a header value should print debug information in the log
+// IsDebug checks whether a header value should print debug information in the log
 func (s *SingleHeader) IsDebug() bool {
 	if s.Debug == nil || *s.Debug == false {
 		return false
@@ -170,7 +200,7 @@ func (s *SingleHeader) IsDebug() bool {
 	return true
 }
 
-//IsContains checks whether a header value should contain the configured value
+// IsContains checks whether a header value should contain the configured value
 func (s *SingleHeader) IsContains() bool {
 	if s.Contains == nil || *s.Contains == false {
 		return false
@@ -179,11 +209,20 @@ func (s *SingleHeader) IsContains() bool {
 	return true
 }
 
-//IsRequired checks whether a header is mandatory in the request, defaults to 'true'
+// IsRequired checks whether a header is mandatory in the request, defaults to 'true'
 func (s *SingleHeader) IsRequired() bool {
 	if s.Required == nil || *s.Required != false {
 		return true
 	}
 
 	return false
+}
+
+// IsRegex checks whether a header value should be matched using regular expressions
+func (s *SingleHeader) IsRegex() bool {
+	if s.Regex == nil || *s.Regex == false {
+		return false
+	}
+
+	return true
 }

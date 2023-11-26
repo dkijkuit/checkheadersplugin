@@ -10,6 +10,7 @@ import (
 )
 
 var required = true
+var regex = true
 var not_required = false
 var contains = true
 var urlDecode = true
@@ -24,6 +25,8 @@ func TestHeadersMatch(t *testing.T) {
 		"test2":                            "testvalue2",
 		"test3":                            "testvalue3",
 		"test4":                            "value4",
+		"testNumberRegex":                  "12345",
+		"testCountryCodeRegex":             "NL",
 		"X-Forwarded-Tls-Client-Cert-Info": testcert,
 		"testMultipleContainsValues":       "value5_or_value1_or_value_2_or_value_3",
 	}
@@ -37,6 +40,8 @@ func TestHeadersOneMatch(t *testing.T) {
 		"test2":                            "testvalue2",
 		"test3":                            "testvalue3",
 		"test4":                            "value4",
+		"testNumberRegex":                  "12345",
+		"testCountryCodeRegex":             "GB",
 		"X-Forwarded-Tls-Client-Cert-Info": testcert,
 		"testMultipleContainsValues":       "test_or_value2",
 	}
@@ -50,6 +55,8 @@ func TestHeadersNotMatch(t *testing.T) {
 		"test2":                            "wrongvalue2",
 		"test3":                            "wrongvalue3",
 		"test4":                            "correctvalue4",
+		"testNumberRegex":                  "abcde",
+		"testCountryCodeRegex":             "DE",
 		"X-Forwarded-Tls-Client-Cert-Info": "wrongvalue",
 		"testMultipleContainsValues":       "wrongvalues",
 	}
@@ -62,6 +69,8 @@ func TestHeadersNotRequired(t *testing.T) {
 		"test1":                            "testvalue1",
 		"test2":                            "testvalue2",
 		"test4":                            "ue4",
+		"testNumberRegex":                  "12345",
+		"testCountryCodeRegex":             "FR",
 		"X-Forwarded-Tls-Client-Cert-Info": testcert,
 		"testMultipleContainsValues":       "value5_or_value1_or_value_2_or_value_3",
 	}
@@ -128,6 +137,23 @@ func executeTest(t *testing.T, requestHeaders map[string]string, expectedResultC
 			Required:  &not_required,
 			Contains:  &contains,
 			URLDecode: &urlDecode,
+		},
+
+		// Adding headers with regex support
+		{
+			Name:      "testNumberRegex",
+			MatchType: string(checkheaders.MatchOne),
+			Values:    []string{"\\d{5}"},
+			Regex:     &regex,
+			Required:  &required,
+		},
+		//match country codes
+		{
+			Name:      "testCountryCodeRegex",
+			MatchType: string(checkheaders.MatchOne),
+			Values:    []string{"^NL|GB|FR$"},
+			Regex:     &regex,
+			Required:  &required,
 		},
 	}
 
