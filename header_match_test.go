@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
 	checkheaders "github.com/dkijkuit/checkheadersplugin"
 )
 
@@ -59,6 +58,23 @@ func TestHeadersNotMatch(t *testing.T) {
 		"testCountryCodeRegex":             "DE",
 		"X-Forwarded-Tls-Client-Cert-Info": "wrongvalue",
 		"testMultipleContainsValues":       "wrongvalues",
+	}
+
+	executeTest(t, requestHeaders, http.StatusForbidden)
+}
+
+func TestHeadersNotMatchWhenSomeAreCorrect(t *testing.T) {
+	requestHeaders := map[string]string{
+		//wrong values
+		"test1":                            "should_not_match",
+		"test2":                            "should_not_match",
+		"test3":                            "should_not_match",
+		//correct values
+		"test4":                            "value4",
+		"testNumberRegex":                  "12345",
+		"testCountryCodeRegex":             "NL",
+		"X-Forwarded-Tls-Client-Cert-Info": testcert,
+		"testMultipleContainsValues":       "value5_or_value1_or_value_2_or_value_3",
 	}
 
 	executeTest(t, requestHeaders, http.StatusForbidden)
@@ -138,7 +154,6 @@ func executeTest(t *testing.T, requestHeaders map[string]string, expectedResultC
 			Contains:  &contains,
 			URLDecode: &urlDecode,
 		},
-
 		// Adding headers with regex support
 		{
 			Name:      "testNumberRegex",
@@ -152,6 +167,14 @@ func executeTest(t *testing.T, requestHeaders map[string]string, expectedResultC
 			Name:      "testCountryCodeRegex",
 			MatchType: string(checkheaders.MatchOne),
 			Values:    []string{"^NL|GB|FR$"},
+			Regex:     &regex,
+			Required:  &required,
+		},
+		//blacklist DE example
+		{
+			Name:      "testCountryCodeRegex",
+			MatchType: string(checkheaders.MatchOne),
+			Values:    []string{"^(?!DE$)[A-Z]{2}$"},
 			Regex:     &regex,
 			Required:  &required,
 		},

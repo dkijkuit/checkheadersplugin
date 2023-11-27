@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
+	"github.com/dlclark/regexp2"
 )
 
 // SingleHeader contains a single header keypair
@@ -101,13 +101,17 @@ func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				headersValid = checkContains(&reqHeaderVal, &vHeader)
 			} else if vHeader.IsRegex() {
 				headersValid = checkRegex(&reqHeaderVal, &vHeader)
+			} else {
+				headersValid = checkRequired(&reqHeaderVal, &vHeader)
 			}
 		} else {
 			headersValid = checkRequired(&reqHeaderVal, &vHeader)
 		}
 
 		if vHeader.IsDebug() {
-			fmt.Println("checkheaders (debug):\n\tHeaders valid:", headersValid, "\n\tRequest headers:", reqHeaderVal, "\n\tConfigured headers:", vHeader.Values)
+			fmt.Println("checkheaders (debug): Headers valid:", headersValid)
+			fmt.Println("checkheaders (debug): Request headers:", reqHeaderVal)
+			fmt.Println("checkheaders (debug): Configured headers:", vHeader.Values)
 		}
 
 		if !headersValid {
@@ -122,7 +126,13 @@ func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// checkContains checks whether a header value contains the configured value
 func checkContains(requestValue *string, vHeader *SingleHeader) bool {
+
+	if vHeader.IsDebug() {
+		fmt.Println("checkheaders (debug): Validating contains:", *requestValue, vHeader.Values)
+	}
+
 	matchCount := 0
 	for _, value := range vHeader.Values {
 		if strings.Contains(*requestValue, value) {
@@ -139,33 +149,52 @@ func checkContains(requestValue *string, vHeader *SingleHeader) bool {
 	return true
 }
 
+// checkRegex checks whether a header value matches the configured regex
 func checkRegex(requestValue *string, vHeader *SingleHeader) bool {
-	matchCount := 0
-	for _, value := range vHeader.Values {
-		match, err := regexp.MatchString(value, *requestValue)
-		if err != nil {
-			if vHeader.IsDebug() {
-				fmt.Println("Error matching regex:", err)
-			}
-			return false
-		}
-		if match {
-			matchCount++
-		}
-	}
 
-	if matchCount == 0 {
-		return false
-	} else if vHeader.MatchType == string(MatchAll) && matchCount != len(vHeader.Values) {
-		return false
-	}
+    if vHeader.IsDebug() {
+        fmt.Println("checkheaders (debug): Validating:", *requestValue, "with regex:", vHeader.Values)
+    }
 
-	return true
+    matchCount := 0
+    for _, value := range vHeader.Values {
+
+        regex, err := regexp2.Compile(value, 0)
+
+        if err != nil {
+            if vHeader.IsDebug() {
+                fmt.Println("Error compiling regex:", err)
+            }
+            return false
+        }
+
+        match, _ := regex.MatchString(*requestValue)
+
+        if match {
+            matchCount++
+        }
+    }
+
+    if matchCount == 0 {
+        return false
+    } else if vHeader.MatchType == string(MatchAll) && matchCount != len(vHeader.Values) {
+        return false
+    }
+
+    return true
 }
 
+// checkRequired checks whether a header value is required in the request
+// if the header is not required, it will also return true if the header is not present in the request
 func checkRequired(requestValue *string, vHeader *SingleHeader) bool {
+
+	if vHeader.IsDebug() {
+		fmt.Println("checkheaders (debug): Validating required:", *requestValue, vHeader.Values)
+	}
+
 	matchCount := 0
 	for _, value := range vHeader.Values {
+		// if the header is required, it should match the configured value
 		if *requestValue == value {
 			matchCount++
 		}
