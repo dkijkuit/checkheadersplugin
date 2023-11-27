@@ -82,7 +82,7 @@ http:
               name: "HEADER_4"
               matchtype: one
               values:
-                - "VALUE_\\d"
+                - "VALUE_\d"
               required: true
               regex: true
 ```
@@ -157,7 +157,7 @@ middlewares:
               name: "HEADER_4"
               matchtype: one
               values:
-                - "VALUE_\\d"
+                - "VALUE_\d"
               regex: true
               required: true
 ```

@@ -3,31 +3,31 @@ type: middleware
 
 import: github.com/dkijkuit/checkheadersplugin
 
-summary: 'Checks the incoming request for specific headers and their values to be present and matching the configuration.'
+summary: "Checks the incoming request for specific headers and their values to be present and matching the configuration."
 
 testData:
   headers:
     - header:
       name: "HEADER_1"
       matchtype: one
-      values: 
+      values:
         - "VALUE_1"
         - "VALUE_99"
     - header:
       name: "HEADER_2"
       matchtype: one
-      values: 
+      values:
         - "VALUE_2"
     - header:
       name: "HEADER_3"
       matchtype: one
-      values: 
+      values:
         - "VALUE_3"
       required: false
     - header:
       name: "HEADER_4"
       matchtype: all
-      values: 
+      values:
         - "LUE_4"
         - "VALUE_5"
       contains: true
@@ -35,7 +35,7 @@ testData:
     - header:
       name: "HEADER_4"
       matchtype: one
-      values: 
+      values:
         - "VALUE_\\d"
       regex: true
       required: true

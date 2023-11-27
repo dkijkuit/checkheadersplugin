@@ -101,13 +101,17 @@ func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				headersValid = checkContains(&reqHeaderVal, &vHeader)
 			} else if vHeader.IsRegex() {
 				headersValid = checkRegex(&reqHeaderVal, &vHeader)
+			} else {
+				headersValid = checkRequired(&reqHeaderVal, &vHeader)
 			}
 		} else {
 			headersValid = checkRequired(&reqHeaderVal, &vHeader)
 		}
 
 		if vHeader.IsDebug() {
-			fmt.Println("checkheaders (debug):\n\tHeaders valid:", headersValid, "\n\tRequest headers:", reqHeaderVal, "\n\tConfigured headers:", vHeader.Values)
+			fmt.Println("checkheaders (debug): Headers valid:", headersValid)
+			fmt.Println("checkheaders (debug): Request headers:", reqHeaderVal)
+			fmt.Println("checkheaders (debug): Configured headers:", vHeader.Values)
 		}
 
 		if !headersValid {
@@ -122,7 +126,13 @@ func (a *HeaderMatch) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// checkContains checks whether a header value contains the configured value
 func checkContains(requestValue *string, vHeader *SingleHeader) bool {
+
+	if vHeader.IsDebug() {
+		fmt.Println("checkheaders (debug): Validating contains:", *requestValue, vHeader.Values)
+	}
+
 	matchCount := 0
 	for _, value := range vHeader.Values {
 		if strings.Contains(*requestValue, value) {
@@ -139,7 +149,13 @@ func checkContains(requestValue *string, vHeader *SingleHeader) bool {
 	return true
 }
 
+// checkRegex checks whether a header value matches the configured regex
 func checkRegex(requestValue *string, vHeader *SingleHeader) bool {
+
+	if vHeader.IsDebug() {
+		fmt.Println("checkheaders (debug): Validating:", *requestValue, "with regex:", vHeader.Values)
+	}
+
 	matchCount := 0
 	for _, value := range vHeader.Values {
 		match, err := regexp.MatchString(value, *requestValue)
@@ -163,9 +179,17 @@ func checkRegex(requestValue *string, vHeader *SingleHeader) bool {
 	return true
 }
 
+// checkRequired checks whether a header value is required in the request
+// if the header is not required, it will also return true if the header is not present in the request
 func checkRequired(requestValue *string, vHeader *SingleHeader) bool {
+
+	if vHeader.IsDebug() {
+		fmt.Println("checkheaders (debug): Validating required:", *requestValue, vHeader.Values)
+	}
+
 	matchCount := 0
 	for _, value := range vHeader.Values {
+		// if the header is required, it should match the configured value
 		if *requestValue == value {
 			matchCount++
 		}
