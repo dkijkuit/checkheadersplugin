@@ -42,6 +42,8 @@ const (
 	MatchAll MatchType = "all"
 	//MatchOne requires only one value to be matched
 	MatchOne MatchType = "one"
+	//MatchNone requires none of the values to be matched
+	MatchNone MatchType = "none"
 )
 
 // CreateConfig creates the default plugin configuration.
@@ -140,6 +142,13 @@ func checkContains(requestValue *string, vHeader *SingleHeader) bool {
 		}
 	}
 
+	if vHeader.MatchType == string(MatchNone) {
+		if matchCount == 0 {
+			return true
+		}
+		return false
+	}
+
 	if matchCount == 0 {
 		return false
 	} else if vHeader.MatchType == string(MatchAll) && matchCount != len(vHeader.Values) {
@@ -159,19 +168,29 @@ func checkRegex(requestValue *string, vHeader *SingleHeader) bool {
 	matchCount := 0
 	for _, value := range vHeader.Values {
 		match, err := regexp.MatchString(value, *requestValue)
-		if err != nil {
-			if vHeader.IsDebug() {
-				fmt.Println("Error matching regex:", err)
+
+		if err == nil {
+			if match {
+				matchCount++
 			}
-			return false
+		} else {
+			if vHeader.IsDebug() {
+				fmt.Println("checkheaders (debug): ERROR matching regex:", err)
+			}
 		}
-		if match {
-			matchCount++
+
+	}
+
+	if vHeader.MatchType == string(MatchNone) {
+		if matchCount == 0 {
+			return true
 		}
+		return false
 	}
 
 	if matchCount == 0 {
 		return false
+
 	} else if vHeader.MatchType == string(MatchAll) && matchCount != len(vHeader.Values) {
 		return false
 	}
@@ -197,6 +216,13 @@ func checkRequired(requestValue *string, vHeader *SingleHeader) bool {
 		if !vHeader.IsRequired() && *requestValue == "" {
 			matchCount++
 		}
+	}
+
+	if vHeader.MatchType == string(MatchNone) {
+		if matchCount == 0 {
+			return true
+		}
+		return false
 	}
 
 	if matchCount == 0 {

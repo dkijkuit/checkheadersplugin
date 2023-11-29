@@ -110,10 +110,10 @@ Supported configurations per header
 | Setting   | Allowed values | Description |
 | :--       | :--            | :--         |
 | name      | string   | Name of the request header |
-| matchtype | one, all | Match on all values or one of the values specified. The value 'all' is only allowed in combination with the 'contains' setting.|
+| matchtype | one, all, none | Match on all values, one of the values specified or none of the values. The value 'all' is only allowed in combination with the 'contains' and 'regex' setting.|
 | values    | []string | A list of allowed values which are matched against the request header value|
-| contains  | boolean  | If set to true (default false), the request is allowed if the rtequest header value contains the value specified in the configuration |
-| regex     | boolean  | If set to true (default false), the match is done using a regular expression. The value of the request header is matched against the value specified in the configuration. |
+| contains  | boolean  | If set to true (default false), the request is allowed if the request header value contains the value specified in the configuration |
+| regex     | boolean  | If set to true (default false), the match is done using a regular expression. The value of the request header is matched against the value specified in the configuration. via the [regexp](https://pkg.go.dev/regexp) package |
 | required  | boolean  | If set to false (default true), the request is allowed if the header is absent or the value is empty|
 | urldecode | boolean  | If set to true (default false), the value of the request header will be URL decoded before further processing with the plugin. This is useful when using this plugin with the [PassTLSClientCert](https://doc.traefik.io/traefik/middlewares/passtlsclientcert/) middleware that Traefik offers.
 | debug     | boolean  | If set to true (default false), the request headers, values and validation will be printed to the console|
@@ -159,7 +159,7 @@ middlewares:
               values:
                 - "VALUE_\d"
               regex: true
-              required: true
+              required: true  
 ```
 
 ## Example 2 config
