@@ -109,14 +109,14 @@ Supported configurations per header
 
 | Setting   | Allowed values | Description |
 | :--       | :--            | :--         |
-| name      | string   | Name of the request header |
-| matchtype | one, all, none | Match on all values, one of the values specified or none of the values. The value 'all' is only allowed in combination with the 'contains' and 'regex' setting.|
-| values    | []string | A list of allowed values which are matched against the request header value|
-| contains  | boolean  | If set to true (default false), the request is allowed if the request header value contains the value specified in the configuration |
-| regex     | boolean  | If set to true (default false), the match is done using a regular expression. The value of the request header is matched against the value specified in the configuration. via the [regexp](https://pkg.go.dev/regexp) package |
-| required  | boolean  | If set to false (default true), the request is allowed if the header is absent or the value is empty|
-| urldecode | boolean  | If set to true (default false), the value of the request header will be URL decoded before further processing with the plugin. This is useful when using this plugin with the [PassTLSClientCert](https://doc.traefik.io/traefik/middlewares/passtlsclientcert/) middleware that Traefik offers.
-| debug     | boolean  | If set to true (default false), the request headers, values and validation will be printed to the console|
+| name      | string         | Name of the request header |
+| matchtype | one, all, none | Match on all values, one of the values specified or none of the values. The value 'all' is only allowed in combination with the 'contains' and 'regex' setting. |
+| values    | []string       | A list of allowed values which are matched against the request header value |
+| contains  | boolean        | If set to true (default false), the request is allowed if the request header value contains the value specified in the configuration |
+| regex     | boolean        | If set to true (default false), the match is done using a regular expression. The value of the request header is matched against the value specified in the configuration. via the [regexp](https://pkg.go.dev/regexp) package |
+| required  | boolean        | If set to false (default true), the request is allowed if the header is absent or the value is empty |
+| urldecode | boolean        | If set to true (default false), the value of the request header will be URL decoded before further processing with the plugin. This is useful when using this plugin with the [PassTLSClientCert](https://doc.traefik.io/traefik/middlewares/passtlsclientcert/) middleware that Traefik offers. |
+| debug     | boolean        | If set to true (default false), the request headers, values and validation will be printed to the console |
 
 #
 
@@ -159,7 +159,7 @@ middlewares:
               values:
                 - "VALUE_\d"
               regex: true
-              required: true  
+              required: true
 ```
 
 ## Example 2 config
@@ -190,3 +190,40 @@ middlewares:
             required: true
             urldecode: true
 ```
+
+## Example 3 config
+
+This plugin give you also the possibility to validate header via a regular expression. This can be useful when you want to validate a header value against a pattern. For example, you want to validate a JWT token in the `Authorization` header. The JWT token has a specific format and you can validate this with a regular expression.
+
+```yaml
+middlewares:
+  my-checkheadersplugin:
+    plugin:
+      checkheadersplugin:
+        headers:
+          - header:
+            name: "Authorization"
+            matchtype: one
+            values:
+              - "^Bearer .*"
+            regex: true
+```
+
+## Example 4 config
+
+You can also use this plugin to check if header has a certain value that is not allowed. This way you can allow every value except a the provide ones, acting as blacklist. For example, you want to block requests that have `Content-Language` header that are set to `de-DE` or `de-AT`. You can use 'none' in combination with matchtype 'regex' or 'contains'.
+
+```yaml
+middlewares:
+  my-checkheadersplugin:
+    plugin:
+      checkheadersplugin:
+        headers:
+          - header:
+            name: "Content-Language"
+            matchtype: none
+            values:
+              - "de-DE"
+              - "de-AT"
+            required: true
+````
