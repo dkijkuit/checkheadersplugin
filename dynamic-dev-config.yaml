@@ -11,11 +11,11 @@ http:
         - checkheaders
 
   services:
-   service-whoami:
+    service-whoami:
       loadBalancer:
         servers:
           - url: http://127.0.0.1:5000
-  
+
   middlewares:
     checkheaders:
       plugin:
@@ -24,24 +24,24 @@ http:
             - header:
               name: "HEADER_1"
               matchtype: one
-              values: 
+              values:
                 - "VALUE_1"
                 - "VALUE_99"
             - header:
               name: "HEADER_2"
               matchtype: one
-              values: 
+              values:
                 - "VALUE_2"
             - header:
               name: "HEADER_3"
               matchtype: one
-              values: 
+              values:
                 - "VALUE_3"
               required: false
             - header:
               name: "HEADER_4"
               matchtype: all
-              values: 
+              values:
                 - "LUE_4"
                 - "VALUE_5"
               contains: true
@@ -49,7 +49,7 @@ http:
             - header:
               name: "HEADER_4"
               matchtype: one
-              values: 
-                - "VALUE_\d"
+              values:
+                - "VALUE_\\d"
               regex: true
-              required: true  
+              required: true
